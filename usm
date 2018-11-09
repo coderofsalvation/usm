@@ -1,0 +1,120 @@
+#!/bin/bash
+export DIALOG=dialog
+[[ -n $DISPLAY ]] && which xdialog && export DIALOG=xdialog
+export DIALOG="$DIALOG --ascii-lines"
+export TMPFILE=/tmp/.$(whoami).reply
+export REPLY=$TMPFILE.usm
+export MATCHES=$TMPFILE.matches
+export OPTIONS=$TMPFILE.options
+export SELECTEDFILE=$TMPFILE.selectedfile
+export CURRENTINDEX=$TMPFILE.currentindex
+export players=()
+export query="kick.*\.wav$"
+export limit=10
+export workdir=/tmp
+touch $REPLY
+
+helptxt='
+    UNIX SAMPLE MANAGER (USM)
+'
+
+kill_audio(){  
+  echo "stopping audio"
+  # not needed because audioplayers play in foreground
+  #for p in ${players[@]}; do killall -s SIGINT $(basename $p) &>/dev/null; done 
+}
+
+is_audio(){
+  [[ "$1" =~ \.mp3$|\.wav$|\.aiff$|\.iff$|\.ogg$|\.flac$ ]] && return 0 || return 1
+}
+
+play_audio(){
+  file="$1"
+  ! is_audio "$file" && return 1
+  players=()
+  [[ "$file" =~ \.ogg$ ]] && players+=("$(which ogg123)")
+  [[ "$file" =~ \.mp3$ ]] && {
+    which mplayer  &>/dev/null && players+=("$(which mplayer) -novideo")
+    which mpg123 &>/dev/null && players+=("$(which mpg123)")
+  }
+  [[ "$file" =~ \.flac$|\.wav$|\.aiff$|\.iff$ ]] && {
+    which play   &>/dev/null && players+=("$(which play)")
+    which mplayer   &>/dev/null && players+=("$(which mplayer) -novideo")
+    which paplay &>/dev/null && players+=("$(which paplay)")
+    which aplay  &>/dev/null && players+=("$(which aplay)");
+  }
+  kill_audio
+  player="${players[0]}"
+  ${player} "$file"
+  return 0
+}
+
+prefs(){
+    TERM=vt220 ${DIALOG} --title " " --clear \
+              --no-tags --checklist "Search options " 20 61 5 \
+              "Regex support" off \
+              "Foo bar" ON 2> $OPTIONS
+    searchdialog
+}
+
+helptext(){
+   TERM=vt220 ${DIALOG} --msgbox "$helptxt" 50 130
+   searchdialog
+}
+
+searchdialog(){
+    sleep 0.3s
+    TERM=vt220 ${DIALOG} --help-button --no-cancel --ok-label "Search!" --title "Unix Sample Manager" --extra-button --extra-label "Options" --clear \
+            --form "CTRL-C to quit" 15 50 0 \
+            "Searchterm:" 1 1 "$query"  1 20 25 0 \
+            "Result limit:" 2 1 "$limit" 2 20 5 0 \
+            "Save to folder:" 3 1 "$workdir" 3 20 25 0 2>$REPLY
+    local ret=$?
+    if [[ $ret == '2' ]]; then helptext; return 0; fi 
+    if [[ $ret == '3' ]]; then prefs; return 0; fi 
+    [[ ! -s $REPLY ]] && return 1
+    query=$(cat $REPLY | sed -n '1p' )
+    limit=$(cat $REPLY | sed -n '2p' )
+    workdir=$(cat $REPLY | sed -n '3p' )
+    return $ret
+}
+
+preview(){
+    local menuitems=()
+    local selected=()
+    local index="$(<$CURRENTINDEX)"
+    local i=1
+    while read line; do menuitems+=("$i" "$line"); i=$((i+1)); done < $MATCHES
+    [[ ${#index} > 0 ]] && selected+=("--default-item" "$index")
+    ${DIALOG} --title "Matches" --extra-button --extra-label "Save" --cancel-label "Back" --ok-label "Preview" --no-tags ${selected[@]} --menu " " 50 130 50 "${menuitems[@]}" 2> $CURRENTINDEX
+    ret=$?
+    index=$(<$CURRENTINDEX)
+    if [[ ! -z $index ]]; then
+        SELECTEDFILE="$( cat $MATCHES | sed -n "$index"p )"
+        echo "loading $SELECTEDFILE"
+        [[ -z "$SELECTEDFILE" ]] && return 0
+        [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '0' ]] && [[ ! -n $ACTION ]] && play_audio "$SELECTEDFILE"
+        [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '0' ]] && [[ -n $ACTION   ]] && ${ACTION} "$SELECTEDFILE"
+        [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '3' ]] && cp "$SELECTEDFILE" $workdir/.
+        kill_audio
+        sleep 0.1s
+        preview
+    fi
+}
+
+main(){
+    searchdialog 
+    if [[ $? == 0 ]]; then 
+        if (( $limit > 20 )); then  
+            locate -i -r "$query" -l$limit | tee $MATCHES | TERM=vt220 ${DIALOG} --title "Searching" "$@" --programbox 50 130
+        else
+            echo "searching.."
+            locate -i -r "$query" -l$limit > $MATCHES 
+        fi
+        preview
+    fi
+    main
+}
+main
+
+#trap '[[ ! -z $TMPFILE ]] && rm $TMPFILE.*' 0 1 2 3 4 5 255
