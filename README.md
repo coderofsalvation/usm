@@ -3,7 +3,7 @@
 
 # Usage
 
-[](demo.gif)
+<img src="demo.gif" width="100%"/>
 
 # The problem 
 
@@ -15,21 +15,25 @@ This is a problem scientists, audiodesigners and videoartists face.
 
 # Installation
 
-> now lets create indexes
+> lets index some huge folders 
 
     $ sudo apt-get install mlocate dialog
     $ mkdir ~/.mlocate 
-    $ updatedb --output ~/.mlocate/myusbdiskA --root /mnt/myusbdiskA/samples
+    $ updatedb --output ~/.mlocate/samples    --root /home/myusername/samples 
     $ updatedb --output ~/.mlocate/myusbdiskB --root /mnt/myusbdiskB/projects
+    $ updatedb --output ~/.mlocate/dropbox    --root /mnt/Dropbox/audio
+    $ updatedb --output ~/.mlocate/gdrive     --root /mnt/Gdrive/myrockband
     $ echo 'export LOCATE_PATH=~/.mlocate' >> ~/.bashrc
 
-> NOTE: `updatedb` takes a while (depending on the size of your hd)
+> now lets install usm 
 
-    $ wget
+    $ wget "https://raw.githubusercontent.com/coderofsalvation/usm/master/usm"
+    $ chmod 755 usm
+    $ sudo cp usm /usr/local/bin/.
 
 # Unix ninja's
 
-USM is just a wrapper for the `locate` tool. You can use also without USM:
+USM is just a wrapper for the `locate` tool. You can also search indexes without USM:
 
     $ locate -r 'kick.*\.wav' -l10     # show first 10 regex matches
 
@@ -43,4 +47,6 @@ This can be overruled by running USM like so:
 # Background 
 
 The author struggled for years with a proper solution.
-Searching thru network drives (sshfs / nfs / samba) is too slow in many cases.
+As a sounddesigner his audio / instrument library kept growing and growing.
+Searching thru network drives (sshfs / nfs / samba) is too slow in many cases, and not possible offline.
+USM only touches a networkdrive when preview or saving a file.
