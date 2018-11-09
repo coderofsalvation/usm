@@ -9,9 +9,9 @@
 
 > How to quickly search thru terabytes of samples across different harddrives/clouddrives? And what if they're offline?
 
-This is a problem scientists, audiodesigners and videoartists face.
+This is a problem scientists, audiodesigners and videoartists sometimes face.
 
-> solution: the good old unix tool *locate*
+> solution: the good old `locate` unix tool
 
 # Installation
 
