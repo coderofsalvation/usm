@@ -11,7 +11,7 @@ export CURRENTINDEX=$TMPFILE.currentindex
 export players=()
 export query="kick.*\.wav$"
 export limit=10
-export workdir=/tmp
+export workdir="$(pwd)"
 touch $REPLY
 
 helptxt='
@@ -68,14 +68,14 @@ searchdialog(){
             --form "CTRL-C to quit" 15 50 0 \
             "Searchterm:" 1 1 "$query"  1 20 25 0 \
             "Result limit:" 2 1 "$limit" 2 20 5 0 \
-            "Save to folder:" 3 1 "$workdir" 3 20 25 0 2>$REPLY
+            "Save to folder:" 3 1 "$workdir" 3 20 85 0 2>$REPLY
     local ret=$?
     if [[ $ret == '2' ]]; then helptext; return 0; fi 
     if [[ $ret == '3' ]]; then prefs; return 0; fi 
     [[ ! -s $REPLY ]] && return 1
     query=$(cat $REPLY | sed -n '1p' )
     limit=$(cat $REPLY | sed -n '2p' )
-    workdir=$(cat $REPLY | sed -n '3p' )
+    workdir="$(cat $REPLY | sed -n '3p' )"
     return $ret
 }
 
@@ -95,7 +95,8 @@ preview(){
         [[ -z "$SELECTEDFILE" ]] && return 0
         [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '0' ]] && [[ ! -n $ACTION ]] && play_audio "$SELECTEDFILE"
         [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '0' ]] && [[ -n $ACTION   ]] && ${ACTION} "$SELECTEDFILE"
-        [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '3' ]] && cp "$SELECTEDFILE" $workdir/.
+        [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '3' ]] && cp "$SELECTEDFILE" "$workdir"/.
+        [[ ! $? == '0' ]] && read -p 'press a key to continue'
         kill_audio
         sleep 0.1s
         preview
