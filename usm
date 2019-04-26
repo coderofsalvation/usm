@@ -95,8 +95,7 @@ preview(){
         [[ -z "$SELECTEDFILE" ]] && return 0
         [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '0' ]] && [[ ! -n $ACTION ]] && play_audio "$SELECTEDFILE"
         [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '0' ]] && [[ -n $ACTION   ]] && ${ACTION} "$SELECTEDFILE"
-        [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '3' ]] && cp "$SELECTEDFILE" "$workdir"/.
-        [[ ! $? == '0' ]] && read -p 'press a key to continue'
+        [[ ! -z "$SELECTEDFILE" ]] && [[ $ret == '3' ]] && { cp "$SELECTEDFILE" "$workdir"/.  || read -p 'press a key to continue'; }
         kill_audio
         sleep 0.1s
         preview
