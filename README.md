@@ -25,7 +25,11 @@ This is a problem scientists, audiodesigners and videoartists sometimes face.
     $ updatedb --output ~/.mlocate/myusbdiskB --root /mnt/myusbdiskB/projects
     $ updatedb --output ~/.mlocate/dropbox    --root /mnt/Dropbox/audio
     $ updatedb --output ~/.mlocate/gdrive     --root /mnt/Gdrive/myrockband
-    $ echo 'export LOCATE_PATH=~/.mlocate' >> ~/.bashrc
+
+> depending on your mlocate version, use one of these:
+
+    $ echo "export LOCATE_PATH=/var/lib/mlocate/mlocate.db:$(find ~/.mlocate/* | sed 'N;s|\n|:|g')" >> ~/.bashrc
+    $ echo "export LOCATE_PATH=~/.mlocate" >> ~/.bashrc
 
 > now lets install usm 
 

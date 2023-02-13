@@ -9,7 +9,7 @@ export SELECTEDFILE=$TMPFILE.selectedfile
 export CURRENTINDEX=$TMPFILE.currentindex
 export players=()
 export query="kick.*\.wav$"
-export limit=10
+export limit=25
 export workdir="$(pwd)"
 export resultdir="/tmp/usm"
 touch $REPLY
@@ -37,7 +37,11 @@ helptxt='
     $ updatedb --output ~/.mlocate/myusbdiskB --root /mnt/myusbdiskB/projects
     $ updatedb --output ~/.mlocate/dropbox    --root /mnt/Dropbox/audio
     $ updatedb --output ~/.mlocate/gdrive     --root /mnt/Gdrive/myrockband
-    $ echo 'export LOCATE_PATH=~/.mlocate' >> ~/.bashrc
+
+    # depending on your mlocate version, use one of these:
+
+    $ echo "export LOCATE_PATH=/var/lib/mlocate/mlocate.db:$(find ~/.mlocate/* | sed 'N;s|\n|:|g')" >> ~/.bashrc
+    $ echo "export LOCATE_PATH=~/.mlocate" >> ~/.bashrc
     
     now launching ./usm will use locate (which searches thru ~/.mlocate) and automatically 
     symlink/copy results to a searchresults/work-folder.
@@ -140,13 +144,12 @@ main(){
         else
             echo "searching.."
             locate -i -r "$query" -l$limit > $MATCHES 
-            echo $resultdir
-            test -d $resultdir || mkdir -p $resultdir
-            test -d $resultdir && rm $resultdir/*
-            cat $MATCHES | while read f; do ln -s "$f" $resultdir/.; done
-            ls -la $resultdir
-            exit
         fi
+        test -d $resultdir || mkdir -p $resultdir
+        test -d $resultdir && { set +e; rm $resultdir/*; set -e; }
+        cat $MATCHES | while read f; do ln -s "$f" $resultdir/.; done
+        ls -la $resultdir
+        read -p presskey foo
         preview
     fi
     main
