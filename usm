@@ -1,7 +1,6 @@
 #!/bin/bash
 export DIALOG=dialog
 [[ -n $DISPLAY ]] && which xdialog && export DIALOG=xdialog
-export DIALOG="$DIALOG --ascii-lines"
 export TMPFILE=/tmp/.$(whoami).reply
 export REPLY=$TMPFILE.usm
 export MATCHES=$TMPFILE.matches
@@ -12,10 +11,39 @@ export players=()
 export query="kick.*\.wav$"
 export limit=10
 export workdir="$(pwd)"
+export resultdir="/tmp/usm"
 touch $REPLY
+which $DIALOG || { echo "[!] $DIALOG not installed..aborting"; exit 0; }
+#export DIALOG="$DIALOG --ascii-lines"
 
 helptxt='
     UNIX SAMPLE MANAGER (USM)
+
+    Search TERABYTES of samples across different (network) disks in few seconds (+offline)
+
+    ## THE PROBLEM/SOLUTION
+
+    How to quickly search thru terabytes of samples across different harddrives/clouddrives? And what if they are offline?
+    This is a problem scientists, audiodesigners and videoartists sometimes face.
+    solution: the good old locate unix tool. 
+
+    ## USAGE
+
+    lets index some huge folders
+
+    $ sudo apt-get install mlocate dialog
+    $ mkdir ~/.mlocate
+    $ updatedb --output ~/.mlocate/samples    --root /home/myusername/samples
+    $ updatedb --output ~/.mlocate/myusbdiskB --root /mnt/myusbdiskB/projects
+    $ updatedb --output ~/.mlocate/dropbox    --root /mnt/Dropbox/audio
+    $ updatedb --output ~/.mlocate/gdrive     --root /mnt/Gdrive/myrockband
+    $ echo 'export LOCATE_PATH=~/.mlocate' >> ~/.bashrc
+    
+    now launching ./usm will use locate (which searches thru ~/.mlocate) and automatically 
+    symlink/copy results to a searchresults/work-folder.
+
+    TIP: use rclone to mount clouddrives as networkdrives
+
 '
 
 kill_audio(){  
@@ -68,7 +96,8 @@ searchdialog(){
             --form "CTRL-C to quit" 15 50 0 \
             "Searchterm:" 1 1 "$query"  1 20 25 0 \
             "Result limit:" 2 1 "$limit" 2 20 5 0 \
-            "Save to folder:" 3 1 "$workdir" 3 20 85 0 2>$REPLY
+            "Searchresults folder:" 3 1 "$workdir" 3 20 85 0 2>$REPLY \
+            "Work folder:" 4 1 "$resultdir" 4 20 105 0 2>$REPLY
     local ret=$?
     if [[ $ret == '2' ]]; then helptext; return 0; fi 
     if [[ $ret == '3' ]]; then prefs; return 0; fi 
@@ -76,6 +105,7 @@ searchdialog(){
     query=$(cat $REPLY | sed -n '1p' )
     limit=$(cat $REPLY | sed -n '2p' )
     workdir="$(cat $REPLY | sed -n '3p' )"
+    resultdir="$(cat $REPLY | sed -n '4p' )"
     return $ret
 }
 
@@ -110,6 +140,12 @@ main(){
         else
             echo "searching.."
             locate -i -r "$query" -l$limit > $MATCHES 
+            echo $resultdir
+            test -d $resultdir || mkdir -p $resultdir
+            test -d $resultdir && rm $resultdir/*
+            cat $MATCHES | while read f; do ln -s "$f" $resultdir/.; done
+            ls -la $resultdir
+            exit
         fi
         preview
     fi

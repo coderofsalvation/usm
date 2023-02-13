@@ -1,6 +1,8 @@
 # usm
 [unix sample manager] search TERABYTES of samples across different (network) disks in few seconds (+offline)
 
+> UPDATE 19-02-2023: usm now automatically symlinks the searchresults to a folder (which you can open in your daw/app etc) ❤
+
 # Usage
 
 <img src="demo.gif" width="100%"/>
@@ -30,6 +32,8 @@ This is a problem scientists, audiodesigners and videoartists sometimes face.
     $ wget "https://raw.githubusercontent.com/coderofsalvation/usm/master/usm"
     $ chmod 755 usm
     $ sudo cp usm /usr/local/bin/.
+
+> optional: install `rclone` to easily mount clouddrives to local folders (great for small harddrives)
 
 # Unix ninja's
 
